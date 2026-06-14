@@ -1,0 +1,26 @@
+# Kafka (KRaft single broker) as trace backend when cfg.Trace.exporter=kafka_topic.
+# mqx observability/exporter/kafkatopic 把每条 span Produce 到 topic "trace-spans-<driver>"。
+# example/assert 包起临时 consumer 拉 topic 反向断言 trace_id。
+# 端口 9092 对 client 暴露，broker 内部 KRaft 单节点无需 zookeeper。
+services:
+  kafka:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/bitnami/kafka:3.6
+    container_name: mqx-trace-kafka
+    ports:
+      - "19092:9092"   # host 19092 ↔ container 9092；与业务 broker 9092 端口解耦
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20

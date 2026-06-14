@@ -1,0 +1,125 @@
+# Redisx 6 节点 cluster（3 master + 3 replica）
+# 端口 7000-7005
+services:
+  redis-c-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2-alpine
+    container_name: mqx-redisx-c-0
+    command: >
+      redis-server
+      --requirepass redis123456
+      --masterauth redis123456
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --port 7000
+      --appendonly no
+      --save ""
+    ports:
+      - "7000:7000"
+      - "17000:17000"
+  redis-c-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2-alpine
+    container_name: mqx-redisx-c-1
+    command: >
+      redis-server
+      --requirepass redis123456
+      --masterauth redis123456
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --port 7001
+      --appendonly no
+      --save ""
+    ports:
+      - "7001:7001"
+      - "17001:17001"
+  redis-c-2:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2-alpine
+    container_name: mqx-redisx-c-2
+    command: >
+      redis-server
+      --requirepass redis123456
+      --masterauth redis123456
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --port 7002
+      --appendonly no
+      --save ""
+    ports:
+      - "7002:7002"
+      - "17002:17002"
+  redis-c-3:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2-alpine
+    container_name: mqx-redisx-c-3
+    command: >
+      redis-server
+      --requirepass redis123456
+      --masterauth redis123456
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --port 7003
+      --appendonly no
+      --save ""
+    ports:
+      - "7003:7003"
+      - "17003:17003"
+  redis-c-4:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2-alpine
+    container_name: mqx-redisx-c-4
+    command: >
+      redis-server
+      --requirepass redis123456
+      --masterauth redis123456
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --port 7004
+      --appendonly no
+      --save ""
+    ports:
+      - "7004:7004"
+      - "17004:17004"
+  redis-c-5:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2-alpine
+    container_name: mqx-redisx-c-5
+    command: >
+      redis-server
+      --requirepass redis123456
+      --masterauth redis123456
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --port 7005
+      --appendonly no
+      --save ""
+    ports:
+      - "7005:7005"
+      - "17005:17005"
+  redis-init:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2-alpine
+    container_name: mqx-redisx-cluster-init
+    depends_on:
+      - redis-c-0
+      - redis-c-1
+      - redis-c-2
+      - redis-c-3
+      - redis-c-4
+      - redis-c-5
+    command: >
+      sh -c "
+        sleep 5 &&
+        echo 'yes' | redis-cli --cluster create
+        10.0.0.1:7000 10.0.0.2:7001 10.0.0.3:7002
+        10.0.0.4:7003 10.0.0.5:7004 10.0.0.6:7005
+        --cluster-replicas 1 -a redis123456 --user default
+      "
+    networks:
+      default:
+        ipv4_address: 10.0.0.100
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.0.0.0/16

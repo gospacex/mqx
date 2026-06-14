@@ -1,0 +1,19 @@
+# Jaeger all-in-one (OTLP gRPC :4317, OTLP HTTP :4318, UI :16686, query :16685)
+# Used as trace backend when cfg.Trace.exporter=jaeger (OTLP gRPC).
+# 端口 4317 是 OTLP gRPC 入口，mqx InitTracing 默认连这里。
+# 端口 16686 是 query API，example/assert 包用 GET /api/traces/<hex> 断言。
+services:
+  jaeger:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/jaegertracing/all-in-one:1.57
+    container_name: mqx-trace-jaeger
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "16686:16686" # UI + query API
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:14269/status"]
+      interval: 5s
+      timeout: 3s
+      retries: 20

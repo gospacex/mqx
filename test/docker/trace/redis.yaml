@@ -1,0 +1,16 @@
+# Redis 7 (single) as trace backend when cfg.Trace.exporter=redis_stream.
+# mqx observability/exporter/redisstream 把每条 span XAdd 到 stream "trace:<driver>:<topology>"。
+# example/assert 包用 XRange 反向断言 trace_id。
+# 注意：业务 driver 用自己 broker 的 redis 实例时不能复用这里；这里仅做 trace backend。
+services:
+  redis:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.2-alpine
+    container_name: mqx-trace-redis
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 20

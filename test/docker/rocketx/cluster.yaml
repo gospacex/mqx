@@ -1,0 +1,26 @@
+services:
+  namesrv-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/apache/rocketmq:5.1.0
+    container_name: mqx-rocketx-namesrv-0
+    command: ["sh", "mqnamesrv"]
+    ports: ["9876:9876"]
+
+  namesrv-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/apache/rocketmq:5.1.0
+    container_name: mqx-rocketx-namesrv-1
+    command: ["sh", "mqnamesrv"]
+    ports: ["9877:9876"]
+
+  broker-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/apache/rocketmq:5.1.0
+    container_name: mqx-rocketx-broker-0
+    depends_on: [namesrv-0, namesrv-1]
+    command: ["sh", "mqbroker", "-n", "namesrv-0:9876;namesrv-1:9876"]
+    ports: ["10911:10911", "10909:10909"]
+
+  broker-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/apache/rocketmq:5.1.0
+    container_name: mqx-rocketx-broker-1
+    depends_on: [namesrv-0, namesrv-1]
+    command: ["sh", "mqbroker", "-n", "namesrv-0:9876;namesrv-1:9876", "-p", "10912"]
+    ports: ["10912:10911", "10910:10909"]

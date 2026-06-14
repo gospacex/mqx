@@ -1,0 +1,25 @@
+# Pulsarx 3 节点 "伪集群" —— 3 个独立 standalone，各自暴露错开的 broker 端口。
+# driver cluster 模式只测连接多个 broker URL 的能力，3 个独立 standalone 在 e2e 里足够。
+# 注意：3 节点是互相独立的 zookeeper 元数据，不是真正的统一集群。
+services:
+  pulsar-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/apachepulsar/pulsar:3.0.0
+    container_name: mqx-pulsarx-c-0
+    command: ["bin/pulsar", "standalone"]
+    ports:
+      - "6650:6650"
+      - "8080:8080"
+  pulsar-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/apachepulsar/pulsar:3.0.0
+    container_name: mqx-pulsarx-c-1
+    command: ["bin/pulsar", "standalone"]
+    ports:
+      - "6750:6650"
+      - "8081:8080"
+  pulsar-2:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/apachepulsar/pulsar:3.0.0
+    container_name: mqx-pulsarx-c-2
+    command: ["bin/pulsar", "standalone"]
+    ports:
+      - "6850:6650"
+      - "8082:8080"

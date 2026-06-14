@@ -1,0 +1,77 @@
+# Rabbitx 3 节点 cluster (rabbit@rabbit-{0,1,2})。
+# 通过共享 RABBITMQ_ERLANG_COOKIE + rabbitmqctl join_cluster 把 1/2 加入 0。
+# AMQP 端口 5672/5673/5674；管理 UI 端口 15672/15673/15674。
+services:
+  rabbit-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rabbitmq:3.13-management-alpine
+    container_name: mqx-rabbitx-c-0
+    hostname: rabbit-0
+    environment:
+      RABBITMQ_ERLANG_COOKIE: mqx-cookie
+      RABBITMQ_NODENAME: rabbit@rabbit-0
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  rabbit-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rabbitmq:3.13-management-alpine
+    container_name: mqx-rabbitx-c-1
+    hostname: rabbit-1
+    depends_on:
+      rabbit-0:
+        condition: service_healthy
+    environment:
+      RABBITMQ_ERLANG_COOKIE: mqx-cookie
+      RABBITMQ_NODENAME: rabbit@rabbit-1
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  rabbit-2:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rabbitmq:3.13-management-alpine
+    container_name: mqx-rabbitx-c-2
+    hostname: rabbit-2
+    depends_on:
+      rabbit-0:
+        condition: service_healthy
+    environment:
+      RABBITMQ_ERLANG_COOKIE: mqx-cookie
+      RABBITMQ_NODENAME: rabbit@rabbit-2
+    ports:
+      - "5674:5672"
+      - "15674:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  rabbit-init:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rabbitmq:3.13-management-alpine
+    container_name: mqx-rabbitx-cluster-init
+    depends_on:
+      rabbit-0:
+        condition: service_healthy
+      rabbit-1:
+        condition: service_healthy
+      rabbit-2:
+        condition: service_healthy
+    environment:
+      RABBITMQ_ERLANG_COOKIE: mqx-cookie
+    command: >
+      sh -c "
+        rabbitmqctl -n rabbit@rabbit-1 join_cluster rabbit@rabbit-0 &&
+        rabbitmqctl -n rabbit@rabbit-2 join_cluster rabbit@rabbit-0 &&
+        rabbitmqctl -n rabbit@rabbit-0 await_startup &&
+        rabbitmqctl -n rabbit@rabbit-0 status
+      "

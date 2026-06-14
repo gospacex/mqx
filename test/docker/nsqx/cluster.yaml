@@ -1,0 +1,59 @@
+# Nsqx 集群 docker-compose（3 nsqd + 3 nsqlookupd）
+# nsqd 端口：4150 / 4250 / 4350（TCP）+ 4151 / 4251 / 4351（HTTP）
+# lookupd 端口：4161 / 4261 / 4361（HTTP）+ 4160 / 4260 / 4360（TCP）
+# 每个 nsqd 注册到全部 3 个 lookupd，client 连任意 lookupd 即可发现全部 nsqd。
+services:
+  nsqlookupd-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nsqio/nsq:v1.2.1
+    container_name: mqx-nsqx-lookupd-0
+    command: /nsqlookupd
+    ports:
+      - "4161:4161"
+      - "4160:4160"
+  nsqlookupd-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nsqio/nsq:v1.2.1
+    container_name: mqx-nsqx-lookupd-1
+    command: /nsqlookupd
+    ports:
+      - "4261:4161"
+      - "4260:4160"
+  nsqlookupd-2:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nsqio/nsq:v1.2.1
+    container_name: mqx-nsqx-lookupd-2
+    command: /nsqlookupd
+    ports:
+      - "4361:4161"
+      - "4360:4160"
+  nsqd-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nsqio/nsq:v1.2.1
+    container_name: mqx-nsqd-0
+    command: /nsqd --broadcast-address=localhost --lookupd-tcp-address=nsqlookupd-0:4160,nsqlookupd-1:4160,nsqlookupd-2:4160
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+    depends_on:
+      - nsqlookupd-0
+      - nsqlookupd-1
+      - nsqlookupd-2
+  nsqd-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nsqio/nsq:v1.2.1
+    container_name: mqx-nsqd-1
+    command: /nsqd --broadcast-address=localhost --lookupd-tcp-address=nsqlookupd-0:4160,nsqlookupd-1:4160,nsqlookupd-2:4160
+    ports:
+      - "4250:4150"
+      - "4251:4151"
+    depends_on:
+      - nsqlookupd-0
+      - nsqlookupd-1
+      - nsqlookupd-2
+  nsqd-2:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nsqio/nsq:v1.2.1
+    container_name: mqx-nsqd-2
+    command: /nsqd --broadcast-address=localhost --lookupd-tcp-address=nsqlookupd-0:4160,nsqlookupd-1:4160,nsqlookupd-2:4160
+    ports:
+      - "4350:4150"
+      - "4351:4151"
+    depends_on:
+      - nsqlookupd-0
+      - nsqlookupd-1
+      - nsqlookupd-2

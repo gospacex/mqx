@@ -1,0 +1,61 @@
+# Mqttx 3 节点 emqx cluster（模拟 broker 集群）
+# 端口 1883/1884/1885（每个 broker 各占一个端口）
+# dashboard 端口 18083/18084/18085
+# EMQX_CLUSTER__DISCOVERY_STRATEGY=static + 显式 seeds，让 3 节点互联成集群
+services:
+  emqx-c-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/emqx/emqx:5.6
+    container_name: mqx-mqttx-c-0
+    hostname: mqttx-c-0
+    environment:
+      - EMQX_NAME=emqx@mqttx-c-0
+      - EMQX_HOST=mqttx-c-0
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[{"host":"mqttx-c-1","port":5370},{"host":"mqttx-c-2","port":5370}]
+      - EMQX_DASHBOARD__LISTENERS__HTTP__BIND=18083
+    ports:
+      - "1883:1883"
+      - "18083:18083"
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  emqx-c-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/emqx/emqx:5.6
+    container_name: mqx-mqttx-c-1
+    hostname: mqttx-c-1
+    environment:
+      - EMQX_NAME=emqx@mqttx-c-1
+      - EMQX_HOST=mqttx-c-1
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[{"host":"mqttx-c-0","port":5370},{"host":"mqttx-c-2","port":5370}]
+      - EMQX_DASHBOARD__LISTENERS__HTTP__BIND=18084
+    ports:
+      - "1884:1883"
+      - "18084:18083"
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  emqx-c-2:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/emqx/emqx:5.6
+    container_name: mqx-mqttx-c-2
+    hostname: mqttx-c-2
+    environment:
+      - EMQX_NAME=emqx@mqttx-c-2
+      - EMQX_HOST=mqttx-c-2
+      - EMQX_CLUSTER__DISCOVERY_STRATEGY=static
+      - EMQX_CLUSTER__STATIC__SEEDS=[{"host":"mqttx-c-0","port":5370},{"host":"mqttx-c-1","port":5370}]
+      - EMQX_DASHBOARD__LISTENERS__HTTP__BIND=18085
+    ports:
+      - "1885:1883"
+      - "18085:18083"
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 30

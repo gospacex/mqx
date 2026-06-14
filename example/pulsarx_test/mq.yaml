@@ -1,0 +1,53 @@
+pulsar_single:
+  driver: pulsar
+  mode: single
+  addrs:
+    - ${env:PULSAR_BROKER:-pulsar://localhost:6650}
+  metrics: { enabled: true }
+  producer:
+    topic: persistent://public/default/example-pulsar
+  consumer:
+    topics: [persistent://public/default/example-pulsar]
+    group: example-subscription
+  pulsar:
+    operation_timeout: 30s
+    subscription_type: Shared
+    receiver_queue_size: 100
+  trace:
+    enabled: true
+    service_name: pulsarx-test
+    exporter: ${env:MQ_TRACE_BACKEND:-jaeger}
+    endpoint: ${env:JAEGER_ENDPOINT:-localhost:4317}
+    protocol: grpc
+    sampler_type: always_on
+    sampler_ratio: 1.0
+    stream: ${env:TRACE_REDIS_STREAM:-trace:pulsarx:single}
+    topic: ${env:TRACE_KAFKA_TOPIC:-trace-spans-pulsarx}
+
+pulsar_cluster:
+  driver: pulsar
+  mode: cluster
+  addrs:
+    - ${env:PULSAR_BROKER_1:-pulsar://localhost:6650}
+    - ${env:PULSAR_BROKER_2:-pulsar://localhost:6750}
+    - ${env:PULSAR_BROKER_3:-pulsar://localhost:6850}
+  metrics: { enabled: true }
+  producer:
+    topic: persistent://public/default/example-pulsar
+  consumer:
+    topics: [persistent://public/default/example-pulsar]
+    group: example-cluster-subscription
+  pulsar:
+    operation_timeout: 30s
+    subscription_type: Shared
+    receiver_queue_size: 100
+  trace:
+    enabled: true
+    service_name: pulsarx-test-cluster
+    exporter: ${env:MQ_TRACE_BACKEND:-jaeger}
+    endpoint: ${env:JAEGER_ENDPOINT:-localhost:4317}
+    protocol: grpc
+    sampler_type: always_on
+    sampler_ratio: 1.0
+    stream: ${env:TRACE_REDIS_STREAM:-trace:pulsarx:cluster}
+    topic: ${env:TRACE_KAFKA_TOPIC:-trace-spans-pulsarx}

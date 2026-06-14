@@ -1,0 +1,72 @@
+# Natsx 3-server cluster
+# client 端口 4222/4223/4224，cluster routing 端口 6222/7222/8224，HTTP monitoring 8222/8223/8225
+services:
+  nats-0:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nats:2.10-alpine
+    container_name: mqx-natsx-c-0
+    command:
+      - "--cluster_name"
+      - "natsx"
+      - "--cluster"
+      - "nats://0.0.0.0:6222"
+      - "--port"
+      - "4222"
+      - "--http_port"
+      - "8222"
+      - "--routes"
+      - "nats://nats-0:6222,nats://nats-1:6222,nats://nats-2:6222"
+    ports:
+      - "4222:4222"
+      - "6222:6222"
+      - "8222:8222"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+  nats-1:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nats:2.10-alpine
+    container_name: mqx-natsx-c-1
+    command:
+      - "--cluster_name"
+      - "natsx"
+      - "--cluster"
+      - "nats://0.0.0.0:6222"
+      - "--port"
+      - "4222"
+      - "--http_port"
+      - "8222"
+      - "--routes"
+      - "nats://nats-0:6222,nats://nats-1:6222,nats://nats-2:6222"
+    ports:
+      - "4223:4222"
+      - "7222:6222"
+      - "8223:8222"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+  nats-2:
+    image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/nats:2.10-alpine
+    container_name: mqx-natsx-c-2
+    command:
+      - "--cluster_name"
+      - "natsx"
+      - "--cluster"
+      - "nats://0.0.0.0:6222"
+      - "--port"
+      - "4222"
+      - "--http_port"
+      - "8222"
+      - "--routes"
+      - "nats://nats-0:6222,nats://nats-1:6222,nats://nats-2:6222"
+    ports:
+      - "4224:4222"
+      - "8224:6222"
+      - "8225:8222"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
