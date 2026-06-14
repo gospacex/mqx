@@ -2,6 +2,8 @@ package mqx
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"os"
 	"time"
 	"github.com/gospacex/mqx/config"
 )
@@ -55,7 +57,34 @@ func (t *TLSConfig) BuildTLS() (*tls.Config, error) {
 	if !t.Enabled {
 		return nil, nil
 	}
-	return &tls.Config{InsecureSkipVerify: t.SkipVerify}, nil
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: t.SkipVerify,
+	}
+
+	// 加载客户端证书（双向认证）
+	if t.CertFile != "" && t.KeyFile != "" {
+		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
+		if err != nil {
+			return nil, TLSError("failed to load client certificate", err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	// 加载 CA 证书（验证服务器）
+	if t.CAFile != "" {
+		caCert, err := os.ReadFile(t.CAFile)
+		if err != nil {
+			return nil, TLSError("failed to read CA file", err)
+		}
+		caPool := x509.NewCertPool()
+		if !caPool.AppendCertsFromPEM(caCert) {
+			return nil, TLSError("failed to parse CA certificate", nil)
+		}
+		tlsConfig.RootCAs = caPool
+	}
+
+	return tlsConfig, nil
 }
 
 type ProducerConfig struct {
