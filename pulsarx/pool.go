@@ -3,6 +3,7 @@ package pulsarx
 import (
 	"fmt"
 	"sync/atomic"
+	"time"
 
 	"github.com/apache/pulsar-client-go/pulsar"
 	"github.com/gospacex/mqx"
@@ -36,7 +37,7 @@ func newProducerPool(size int, cacheKey string, cfg *mqx.Config, client pulsar.C
 			opts.BatchingMaxMessages = uint(cfg.Producer.BatchSize)
 		}
 		if cfg.Producer.LingerMs > 0 {
-			opts.BatchingMaxPublishDelay = cfg.Producer.LingerMs * 1000000 // ns
+			opts.BatchingMaxPublishDelay = time.Duration(cfg.Producer.LingerMs) * time.Millisecond
 		}
 
 		if cfg.Pulsar != nil {
